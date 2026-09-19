@@ -4,9 +4,7 @@ use time::OffsetDateTime;
 
 /// Database's unit structure
 #[derive(Debug)]
-struct Task {
-    /// Id
-    id: i64,
+pub struct Task {
     /// Name of which task
     title: String,
     /// Optional information to task
@@ -38,4 +36,26 @@ pub async fn establish_connection() -> anyhow::Result<PgPool> {
     Ok(pool)
 }
 
-// pub async fn db_add(conn: &PgPool, task: Task) -> anyhow::Result<Task> {}
+pub async fn db_add(
+    conn: &PgPool,
+    title: String,
+    description: Option<String>,
+) -> anyhow::Result<Task> {
+    let task = sqlx::query_as!(
+        Task,
+        "INSERT INTO tasks (title, description) VALUES ($1, $2)
+        RETURNING title, description, created_at, completed_at",
+        title,
+        description,
+    )
+    .fetch_one(conn)
+    .await?;
+    Ok(task)
+}
+
+pub async fn db_read_all(conn: &PgPool) -> anyhow::Result<Task> {
+    let task = sqlx::query_as!(Task, "SELECT * FROM tasks")
+        .fetch_one(conn)
+        .await?;
+    Ok(task)
+}
