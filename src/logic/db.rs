@@ -1,3 +1,4 @@
+use anyhow::Ok;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 use time::OffsetDateTime;
@@ -24,7 +25,7 @@ fn get_url() -> anyhow::Result<String> {
     Ok(db_url)
 }
 
-// create connection
+/// create connection
 pub async fn establish_connection() -> anyhow::Result<PgPool> {
     let pool = PgPoolOptions::new()
         .max_connections(50)
@@ -36,7 +37,8 @@ pub async fn establish_connection() -> anyhow::Result<PgPool> {
     Ok(pool)
 }
 
-pub async fn db_add(
+/// Add a task into db
+pub async fn add(
     conn: &PgPool,
     title: String,
     description: Option<String>,
@@ -53,9 +55,37 @@ pub async fn db_add(
     Ok(task)
 }
 
-pub async fn db_read_all(conn: &PgPool) -> anyhow::Result<Task> {
+/// Get all database
+pub async fn load(conn: &PgPool) -> anyhow::Result<Vec<Task>> {
     let task = sqlx::query_as!(Task, "SELECT * FROM tasks")
-        .fetch_one(conn)
+        .fetch_all(conn)
         .await?;
+    Ok(task)
+}
+
+/// Get one task
+pub async fn get_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+    let task = sqlx::query_as!(
+        Task,
+        "SELECT title, description, created_at, completed_at FROM tasks WHERE title = $1",
+        *title
+    )
+    .fetch_optional(conn)
+    .await?;
+
+    Ok(task)
+}
+
+/// Remove task by its title
+pub async fn remove_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+    let task = sqlx::query_as!(
+        Task,
+        "DELETE FROM tasks WHERE title = $1
+        RETURNING title, description, created_at, completed_at",
+        title
+    )
+    .fetch_optional(conn)
+    .await?;
+
     Ok(task)
 }
