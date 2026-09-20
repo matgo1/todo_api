@@ -7,6 +7,7 @@ use time::OffsetDateTime;
 #[derive(Debug)]
 pub struct Task {
     /// Name of which task
+    /// Key value
     title: String,
     /// Optional information to task
     description: Option<String>,
@@ -37,13 +38,13 @@ pub async fn establish_connection() -> anyhow::Result<PgPool> {
     Ok(pool)
 }
 
-/// Add a task into db
+/// Add a task into db or return a unique for this function error
 pub async fn add(
     conn: &PgPool,
     title: String,
     description: Option<String>,
-) -> anyhow::Result<Task> {
-    let task = sqlx::query_as!(
+) -> Result<Task, sqlx::Error> {
+    sqlx::query_as!(
         Task,
         "INSERT INTO tasks (title, description) VALUES ($1, $2)
         RETURNING title, description, created_at, completed_at",
@@ -51,8 +52,7 @@ pub async fn add(
         description,
     )
     .fetch_one(conn)
-    .await?;
-    Ok(task)
+    .await
 }
 
 /// Get all database
@@ -81,6 +81,20 @@ pub async fn remove_item(conn: &PgPool, title: &String) -> anyhow::Result<Option
     let task = sqlx::query_as!(
         Task,
         "DELETE FROM tasks WHERE title = $1
+        RETURNING title, description, created_at, completed_at",
+        title
+    )
+    .fetch_optional(conn)
+    .await?;
+
+    Ok(task)
+}
+
+/// Mark task as completed
+pub async fn complete_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+    let task = sqlx::query_as!(
+        Task,
+        "UPDATE tasks SET completed_at = now() WHERE title = $1
         RETURNING title, description, created_at, completed_at",
         title
     )

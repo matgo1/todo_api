@@ -1,5 +1,6 @@
 //! A minimal REST API backing a Telegram to-do bot.
-mod logic;
+mod data_workflow;
+mod error_handling;
 use axum::{Router, routing};
 use tokio::net::TcpListener;
 
