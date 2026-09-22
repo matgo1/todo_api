@@ -3,8 +3,9 @@ use sqlx::PgPool;
 use super::{Task, db};
 use crate::error_handling::TodoError;
 
-struct Todo {
-    conn: PgPool,
+#[derive(Debug, Clone)]
+pub struct Todo {
+    pub conn: PgPool,
 }
 
 impl Todo {
@@ -58,7 +59,7 @@ impl Todo {
                 None => Err(TodoError::NotFound), // Raise an error in the other case
             },
 
-            Err(e) => Err(TodoError::Database(e.into())), // Raise an unexpected error
+            Err(e) => Err(TodoError::Database(e)), // Raise an unexpected error
         }
     }
 
@@ -69,7 +70,7 @@ impl Todo {
                 Some(task) => Ok(task),
                 None => Err(TodoError::NotFound),
             },
-            Err(e) => Err(TodoError::Database(e.into())),
+            Err(e) => Err(TodoError::Database(e)),
         }
     }
 }
