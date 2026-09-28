@@ -21,3 +21,11 @@ pub async fn start_polling() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
     Ok(())
 }
+
+mod handlers {
+    pub async fn load_tasks() {}
+    pub async fn add_task() {}
+    pub async fn remove_task() {}
+    pub async fn load_one_task() {}
+    pub async fn complete_task() {}
+}

@@ -2,6 +2,7 @@
 mod data_workflow;
 mod error_handling;
 mod router;
+pub use error_handling::TodoError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
