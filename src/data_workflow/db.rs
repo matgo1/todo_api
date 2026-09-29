@@ -1,4 +1,3 @@
-use anyhow::Ok;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 use time::OffsetDateTime;
