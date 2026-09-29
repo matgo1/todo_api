@@ -1372,6 +1372,7 @@ dependencies = [
  "anyhow",
  "axum",
  "dotenvy",
+ "serde",
  "sqlx",
  "thiserror",
  "time",
