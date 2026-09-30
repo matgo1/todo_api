@@ -1,9 +1,10 @@
+use serde::Serialize;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 use time::OffsetDateTime;
 
 /// Database's unit structure
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Task {
     /// Name of which task
     /// Key value

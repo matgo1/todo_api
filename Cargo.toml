@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+thiserror = "2.0.20"
 tokio = { version = "1.53.1", features = ["full"] }
+time = { version = "0.3.55", features = ["serde"] }
 sqlx = { version = "0.9.0", features = [
   "postgres",
   "runtime-tokio",
@@ -14,6 +16,4 @@ sqlx = { version = "0.9.0", features = [
 axum = "0.8.9"
 anyhow = "1.0.104"
 dotenvy = "0.15.7"
-time = "0.3.55"
-thiserror = "2.0.20"
 serde = "1.0.229"
