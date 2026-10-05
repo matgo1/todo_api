@@ -4,7 +4,7 @@ use std::env;
 use time::OffsetDateTime;
 
 /// Database's unit structure
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct Task {
     /// Name of which task
     /// Key value
@@ -102,4 +102,91 @@ pub async fn complete_item(conn: &PgPool, title: &String) -> anyhow::Result<Opti
     .await?;
 
     Ok(task)
+}
+
+// TESTS
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[sqlx::test]
+    async fn add_then_return_same_task(pool: PgPool) {
+        let description = Some("Test desc".into());
+
+        add(&pool, String::from("Test"), description).await.unwrap();
+
+        let task = get_item(&pool, &String::from("Test"))
+            .await
+            .unwrap()
+            .expect("Expected the task to be found");
+
+        assert_eq!(task.title, "Test");
+        assert_eq!(task.description.as_deref(), Some("Test desc"));
+    }
+
+    #[sqlx::test]
+    async fn add_without_description_stores_none(pool: PgPool) {
+        add(&pool, String::from("Test"), None).await.unwrap();
+
+        let task = get_item(&pool, &String::from("Test"))
+            .await
+            .unwrap()
+            .expect("Expected the task to be found");
+
+        assert_eq!(task.title, "Test");
+        assert_eq!(task.description, None);
+    }
+
+    #[sqlx::test]
+    async fn remove_deletes_row(pool: PgPool) {
+        add(&pool, String::from("Test"), None).await.unwrap();
+
+        let task = get_item(&pool, &String::from("Test"))
+            .await
+            .unwrap()
+            .expect("Expected the task to be found");
+
+        assert_eq!(task.title, "Test");
+        assert_eq!(task.description, None);
+
+        let deleted_task: Option<Task> = remove_item(&pool, &String::from("Test")).await.unwrap();
+
+        assert!(deleted_task.is_some(), "Expected to be found");
+
+        let task_shouldnot_found: Option<Task> =
+            get_item(&pool, &String::from("Test")).await.unwrap();
+
+        assert!(task_shouldnot_found.is_none());
+    }
+
+    #[sqlx::test]
+    async fn load_all_tasks_returns_some(pool: PgPool) {
+        add(&pool, String::from("Test1"), None).await.unwrap();
+        add(&pool, String::from("Test2"), None).await.unwrap();
+
+        let tasks: Vec<Task> = load(&pool).await.unwrap();
+
+        assert_eq!(tasks.len(), 2)
+    }
+
+    #[sqlx::test]
+    async fn completed_changes_state(pool: PgPool) {
+        add(&pool, String::from("Test1"), None).await.unwrap();
+
+        let task = get_item(&pool, &String::from("Test1"))
+            .await
+            .unwrap()
+            .expect("Expected the task to be found");
+
+        assert!(task.completed_at.is_none());
+
+        complete_item(&pool, &String::from("Test1")).await.unwrap();
+
+        let task = get_item(&pool, &String::from("Test1"))
+            .await
+            .unwrap()
+            .expect("Expected the task to be found");
+
+        assert!(task.completed_at.is_some())
+    }
 }
