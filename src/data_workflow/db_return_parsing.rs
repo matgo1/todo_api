@@ -71,10 +71,28 @@ mod test {
     async fn add_then_return_same_task(pool: PgPool) {
         let title = "Test";
         let description = Some("Test".to_string());
+
         let init_task = add_task(&pool, title, description).await.unwrap();
 
         let returned_task = load_task(&pool, title).await.unwrap();
 
         assert_eq!(init_task, returned_task);
+    }
+
+    #[sqlx::test]
+    async fn add_same_task_returns_already_exist(pool: PgPool) {
+        let title = "Test";
+        let description = Some("Test".to_string());
+
+        add_task(&pool, title, description.clone()).await.unwrap();
+        let task2 = add_task(&pool, title, description.clone()).await;
+
+        assert!(matches!(task2, Err(TodoError::AlreadyExist)));
+    }
+
+    #[sqlx::test]
+    async fn remove_fake_task_return_not_found(pool: PgPool) {
+        let removed = remove_task(&pool, "Fake Task").await;
+        assert!(matches!(removed, Err(TodoError::NotFound)));
     }
 }
