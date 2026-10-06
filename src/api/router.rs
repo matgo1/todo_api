@@ -6,8 +6,7 @@ use tokio::net::TcpListener;
 
 use crate::data_workflow::db::establish_connection;
 
-use super::AppState;
-use super::handlers;
+use super::{AppState, handlers};
 
 /// Port for binding for the API
 const PORT: &str = "127.0.0.1:3001";
