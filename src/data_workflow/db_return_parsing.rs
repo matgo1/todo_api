@@ -62,3 +62,19 @@ pub async fn complete_task(conn: &PgPool, title: &str) -> Result<Task, TodoError
         Err(e) => Err(TodoError::Database(e)),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[sqlx::test]
+    async fn add_then_return_same_task(pool: PgPool) {
+        let title = "Test";
+        let description = Some("Test".to_string());
+        let init_task = add_task(&pool, title, description).await.unwrap();
+
+        let returned_task = load_task(&pool, title).await.unwrap();
+
+        assert_eq!(init_task, returned_task);
+    }
+}
