@@ -6,7 +6,7 @@ use crate::error_handling::TodoError;
 /// Add task or raise an error
 pub async fn add_task(
     conn: &PgPool,
-    title: String,
+    title: &str,
     description: Option<String>,
 ) -> Result<Task, TodoError> {
     match db::add(conn, title, description).await {
@@ -20,8 +20,8 @@ pub async fn add_task(
 }
 
 /// Remove task or raise an error
-pub async fn remove_task(conn: &PgPool, title: String) -> Result<Task, TodoError> {
-    match db::remove_item(conn, &title).await {
+pub async fn remove_task(conn: &PgPool, title: &str) -> Result<Task, TodoError> {
+    match db::remove_item(conn, title).await {
         // If returned not an error
         Ok(task) => match task {
             Some(task) => Ok(task),           // Check if exists
@@ -40,8 +40,8 @@ pub async fn load_all_tasks(conn: &PgPool) -> Result<Vec<Task>, TodoError> {
 }
 
 /// Load on item from database
-pub async fn load_task(conn: &PgPool, title: String) -> Result<Task, TodoError> {
-    match db::get_item(conn, &title).await {
+pub async fn load_task(conn: &PgPool, title: &str) -> Result<Task, TodoError> {
+    match db::get_item(conn, title).await {
         // If returned not an error
         Ok(task) => match task {
             Some(task) => Ok(task),           // Check if exists
@@ -53,8 +53,8 @@ pub async fn load_task(conn: &PgPool, title: String) -> Result<Task, TodoError> 
 }
 
 /// Mark one task as a completed one
-pub async fn complete_task(conn: &PgPool, title: String) -> Result<Task, TodoError> {
-    match db::complete_item(conn, &title).await {
+pub async fn complete_task(conn: &PgPool, title: &str) -> Result<Task, TodoError> {
+    match db::complete_item(conn, title).await {
         Ok(task) => match task {
             Some(task) => Ok(task),
             None => Err(TodoError::NotFound),

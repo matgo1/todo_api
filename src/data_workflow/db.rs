@@ -41,7 +41,7 @@ pub async fn establish_connection() -> anyhow::Result<PgPool> {
 /// Add a task into db or return a unique for this function error
 pub async fn add(
     conn: &PgPool,
-    title: String,
+    title: &str,
     description: Option<String>,
 ) -> Result<Task, sqlx::Error> {
     sqlx::query_as!(
@@ -64,11 +64,11 @@ pub async fn load(conn: &PgPool) -> anyhow::Result<Vec<Task>> {
 }
 
 /// Get one task
-pub async fn get_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+pub async fn get_item(conn: &PgPool, title: &str) -> anyhow::Result<Option<Task>> {
     let task = sqlx::query_as!(
         Task,
         "SELECT title, description, created_at, completed_at FROM tasks WHERE title = $1",
-        *title
+        title
     )
     .fetch_optional(conn)
     .await?;
@@ -77,7 +77,7 @@ pub async fn get_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Ta
 }
 
 /// Remove task by its title
-pub async fn remove_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+pub async fn remove_item(conn: &PgPool, title: &str) -> anyhow::Result<Option<Task>> {
     let task = sqlx::query_as!(
         Task,
         "DELETE FROM tasks WHERE title = $1
@@ -91,7 +91,7 @@ pub async fn remove_item(conn: &PgPool, title: &String) -> anyhow::Result<Option
 }
 
 /// Mark task as completed
-pub async fn complete_item(conn: &PgPool, title: &String) -> anyhow::Result<Option<Task>> {
+pub async fn complete_item(conn: &PgPool, title: &str) -> anyhow::Result<Option<Task>> {
     let task = sqlx::query_as!(
         Task,
         "UPDATE tasks SET completed_at = now() WHERE title = $1
@@ -113,9 +113,9 @@ mod test {
     async fn add_then_return_same_task(pool: PgPool) {
         let description = Some("Test desc".into());
 
-        add(&pool, String::from("Test"), description).await.unwrap();
+        add(&pool, "Test", description).await.unwrap();
 
-        let task = get_item(&pool, &String::from("Test"))
+        let task = get_item(&pool, "Test")
             .await
             .unwrap()
             .expect("Expected the task to be found");
@@ -126,9 +126,9 @@ mod test {
 
     #[sqlx::test]
     async fn add_without_description_stores_none(pool: PgPool) {
-        add(&pool, String::from("Test"), None).await.unwrap();
+        add(&pool, "Test", None).await.unwrap();
 
-        let task = get_item(&pool, &String::from("Test"))
+        let task = get_item(&pool, "Test")
             .await
             .unwrap()
             .expect("Expected the task to be found");
@@ -139,9 +139,9 @@ mod test {
 
     #[sqlx::test]
     async fn remove_deletes_row(pool: PgPool) {
-        add(&pool, String::from("Test"), None).await.unwrap();
+        add(&pool, "Test", None).await.unwrap();
 
-        let task = get_item(&pool, &String::from("Test"))
+        let task = get_item(&pool, "Test")
             .await
             .unwrap()
             .expect("Expected the task to be found");
@@ -149,20 +149,19 @@ mod test {
         assert_eq!(task.title, "Test");
         assert_eq!(task.description, None);
 
-        let deleted_task: Option<Task> = remove_item(&pool, &String::from("Test")).await.unwrap();
+        let deleted_task: Option<Task> = remove_item(&pool, "Test").await.unwrap();
 
         assert!(deleted_task.is_some(), "Expected to be found");
 
-        let task_shouldnot_found: Option<Task> =
-            get_item(&pool, &String::from("Test")).await.unwrap();
+        let task_shouldnot_found: Option<Task> = get_item(&pool, "Test").await.unwrap();
 
         assert!(task_shouldnot_found.is_none());
     }
 
     #[sqlx::test]
     async fn load_all_tasks_returns_some(pool: PgPool) {
-        add(&pool, String::from("Test1"), None).await.unwrap();
-        add(&pool, String::from("Test2"), None).await.unwrap();
+        add(&pool, "Test1", None).await.unwrap();
+        add(&pool, "Test2", None).await.unwrap();
 
         let tasks: Vec<Task> = load(&pool).await.unwrap();
 
@@ -171,18 +170,18 @@ mod test {
 
     #[sqlx::test]
     async fn completed_changes_state(pool: PgPool) {
-        add(&pool, String::from("Test1"), None).await.unwrap();
+        add(&pool, "Test1", None).await.unwrap();
 
-        let task = get_item(&pool, &String::from("Test1"))
+        let task = get_item(&pool, "Test1")
             .await
             .unwrap()
             .expect("Expected the task to be found");
 
         assert!(task.completed_at.is_none());
 
-        complete_item(&pool, &String::from("Test1")).await.unwrap();
+        complete_item(&pool, "Test1").await.unwrap();
 
-        let task = get_item(&pool, &String::from("Test1"))
+        let task = get_item(&pool, "Test1")
             .await
             .unwrap()
             .expect("Expected the task to be found");
