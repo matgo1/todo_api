@@ -8,13 +8,13 @@ use time::OffsetDateTime;
 pub struct Task {
     /// Name of which task
     /// Key value
-    title: String,
+    pub title: String,
     /// Optional information to task
-    description: Option<String>,
+    pub description: Option<String>,
     /// Time it's created
-    created_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
     /// Time it's completed (if completed)
-    completed_at: Option<OffsetDateTime>,
+    pub completed_at: Option<OffsetDateTime>,
 }
 
 /// Get url of db from .env
